@@ -1,0 +1,287 @@
+---
+title: "Daily City Temperatures"
+subtitle: "1995-2020"
+author:
+  - name: "Send comments to: Tony T (tthrall)"
+date: last-modified
+date-format: HH:mm ddd D-MMM-YYYY
+editor: source
+toc: true
+toc-depth: 3
+format:
+  html:
+    code: true
+params:
+  file_id: "s5c"
+  file_prefix: "s5c_ts_fourier"
+abstract:
+  "Provide summaries and examples of daily temperatures at 300+ cities.  <br><br>"
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+  echo    = FALSE,
+  error   = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r}
+#| label: cran_libraries
+
+library(assertthat)
+# library(astsa)
+# library(fable)
+library(here)
+# library(imputeTS)
+library(knitr)
+# library(latex2exp)
+library(tidyverse)
+# library(tinytex)
+# library(tsibble)
+# library(tsibbledata)
+# library(xts)
+library(zip)
+```
+
+```{r}
+#| label: local_libraries
+
+# library(ugrid)
+```
+
+```{r}
+#| label: local_source
+
+# city_temperatures
+# summaries and examples of daily temps from 300+ cities
+source(here::here("code", "city_temperatures.R"))
+
+# gen_ds_tbl
+# compile a tibble that identifies data sets
+# source(here::here("code", "gen_ds_tbl.R"))
+
+# get_ref_materials
+# encapsulate reference materials as separate modules
+# source(here::here("code", "get_ref_materials.R"))
+```
+
+```{r}
+#| label: kgl_city_temps
+
+# daily temperatures at 300+ cities downloaded from Kaggle
+
+# decompress and read large file only as needed
+construct_tibble <- FALSE
+if (construct_tibble) {
+  kgl_city_temps <- get_kgl_city_temps()
+  
+  # NB: delete files created in data > tmp
+}
+```
+
+```{r}
+#| label: kgl_city_smy
+
+# summary statistics for each city
+
+# construct tibble, or else read saved tibble
+construct_tibble <- FALSE
+if (construct_tibble) {
+  kgl_city_smy <- get_kgl_city_smy()
+  
+  # save as RDS file
+  kgl_city_smy |> readr::write_rds(here::here(
+    "data", "rds", "kgl_city_smy.rds"
+  ))
+} else {
+  kgl_city_smy <- readr::read_rds(here::here(
+    "data", "rds", "kgl_city_smy.rds"
+  ))
+}
+```
+
+```{r}
+#| label: kgl_temps_smy
+
+# (min, median, max) of (n_days, t_avg, t_sd) across cities
+
+# construct tibble, or else read saved tibble
+construct_tibble <- FALSE
+if (construct_tibble) {
+  kgl_temps_smy <- get_kgl_temps_smy()
+  
+  # save as RDS file
+  kgl_temps_smy |> readr::write_rds(here::here(
+  "data", "rds", "kgl_temps_smy.rds"
+))
+} else {
+  kgl_temps_smy <- readr::read_rds(here::here(
+    "data", "rds", "kgl_temps_smy.rds"
+  ))
+}
+```
+
+```{r}
+#| label: city_slices
+
+# identify cities having (min, max) values
+
+city_slices <- get_city_slices()
+
+# construct tibble, or else read saved tibble
+construct_tibble <- FALSE
+if (construct_tibble) {
+  city_slices <- get_city_slices()
+  
+  # save as RDS file
+  city_slices |> readr::write_rds(here::here(
+  "data", "rds", "city_slices.rds"
+))
+} else {
+  city_slices <- readr::read_rds(here::here(
+    "data", "rds", "city_slices.rds"
+  ))
+}
+
+# lubridate::today()
+# [1] "2025-07-08"
+
+# inspect result: city identifiers (w/o Region)
+
+# city_slices |> dplyr::select(slice, Country:City)
+# # A tibble: 6 × 4
+#   slice     Country  State  City      
+#   <chr>     <chr>    <chr>  <chr>     
+# 1 days_min  Germany  NA     Bonn      
+# 2 days_max  Germany  NA     Munich    
+# 3 t_avg_min US       Alaska Fairbanks 
+# 4 t_avg_max Nigeria  NA     Niamey    
+# 5 t_sd_min  Colombia NA     Bogota    
+# 6 t_sd_max  Mongolia NA     Ulan-bator
+
+# inspect result: dates
+
+# city_slices |> dplyr::select(slice, City:dt_max)
+# # A tibble: 6 × 6
+#   slice     City       n_days n_miss dt_min     dt_max    
+#   <chr>     <chr>       <int>  <int> <date>     <date>    
+# 1 days_min  Bonn         3133   2050 1995-01-01 2003-07-30
+# 2 days_max  Munich      10028    178 1995-01-01 2020-05-13
+# 3 t_avg_min Fairbanks    9265     12 1995-01-01 2020-05-13
+# 4 t_avg_max Niamey       9266    201 1995-01-01 2020-05-13
+# 5 t_sd_min  Bogota       9266     70 1995-01-01 2020-05-13
+# 6 t_sd_max  Ulan-bator   9266     45 1995-01-01 2020-05-13
+
+# inspect result: temperatures
+
+# city_slices |> dplyr::select(slice, City, t_avg, t_sd)
+# # A tibble: 6 × 4
+#   slice     City       t_avg  t_sd
+#   <chr>     <chr>      <dbl> <dbl>
+# 1 days_min  Bonn        51.8 13.4 
+# 2 days_max  Munich      48.8 14.1 
+# 3 t_avg_min Fairbanks   28.5 28.5 
+# 4 t_avg_max Niamey      86.0  6.72
+# 5 t_sd_min  Bogota      56.4  1.84
+# 6 t_sd_max  Ulan-bator  30.3 28.9
+
+```
+
+```{r}
+#| label: inspect_DC_temps
+#| eval: false
+
+## 
+# The file downloaded from Kaggle contains 4 copies of daily 
+# temperatures in Washington, DC, 1995-2020.
+#
+#  (A) the city is identified as 
+#      (i)  State = DC; City = Washington
+#      (ii) State = MD; City = Washington DC
+#
+#  (B) each city contains two copies of 1995-2020 temperatures
+#
+# The cleaned file identifies the city as (i) and removes 
+# duplicated temperatures.
+## 
+
+# confirm previous duplication of temps in Washington DC
+
+# Wash_1_temps <- kgl_city_temps |> dplyr::filter(City == "Washington")
+# (Wash_1_temps |> dplyr::select(State, City, dt, temp)) [c(1:3, 9266:9268), ]
+# # A tibble: 6 × 4
+#   State                City       dt          temp
+#   <chr>                <chr>      <date>     <dbl>
+# 1 District of Columbia Washington 1995-01-01  40.6
+# 2 District of Columbia Washington 1995-01-02  39.8
+# 3 District of Columbia Washington 1995-01-03  29.3
+# 4 District of Columbia Washington 1995-01-01  40.6
+# 5 District of Columbia Washington 1995-01-02  39.8
+# 6 District of Columbia Washington 1995-01-03  29.3
+
+# Wash_2_temps <- kgl_city_temps |> dplyr::filter(City == "Washington DC")
+# (Wash_2_temps |> dplyr::select(State, City, dt, temp)) [c(1:3, 9266:9268), ]
+# # A tibble: 6 × 4
+#   State    City          dt          temp
+#   <chr>    <chr>         <date>     <dbl>
+# 1 Maryland Washington DC 1995-01-01  40.6
+# 2 Maryland Washington DC 1995-01-02  39.8
+# 3 Maryland Washington DC 1995-01-03  29.3
+# 4 Maryland Washington DC 1995-01-01  40.6
+# 5 Maryland Washington DC 1995-01-02  39.8
+# 6 Maryland Washington DC 1995-01-03  29.3
+
+```
+
+```{r}
+#| label: HNL_NYC_inspect
+#| eval: false
+
+# inspect HNL-NYC summary for compatible dates
+# kgl_city_smy |> 
+#   dplyr::filter(
+#     City %in% c("Honolulu", "New York City")
+#   )
+# # A tibble: 2 × 7
+#   City          n_days n_miss dt_min     dt_max     t_avg  t_sd
+#   <chr>          <int>  <int> <date>     <date>     <dbl> <dbl>
+# 1 Honolulu        9265     18 1995-01-01 2020-05-13  77.4  3.40
+# 2 New York City   9265     20 1995-01-01 2020-05-13  56.0 17.1 
+
+```
+
+```{r}
+#| label: HNL_NYC_t_imp
+
+# impute missing temperatures at Honolulu and NYC
+
+# construct tibble, or else read saved tibble
+construct_tibble <- FALSE
+if (construct_tibble) {
+  HNL_NYC_t_imp <- 
+    c("Honolulu", "New York City") |> 
+    impute_temp()
+  
+  # save as RDS file
+  HNL_NYC_t_imp |> 
+    readr::write_rds(here::here(
+      "data", "rds", "HNL_NYC_t_imp.rds"
+    ))
+  
+  # also save as TSV file
+  HNL_NYC_t_imp |> 
+    readr::write_tsv(here::here(
+      "data", "retain", "HNL_NYC_t_imp.txt"
+    ))
+} else {
+  HNL_NYC_t_imp <- readr::read_tsv(here::here(
+    "data", "retain", "HNL_NYC_t_imp.txt"
+  ))
+}
+```
+
