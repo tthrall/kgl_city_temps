@@ -11,9 +11,6 @@ toc-depth: 3
 format:
   html:
     code: true
-params:
-  file_id: "s5c"
-  file_prefix: "s5c_ts_fourier"
 abstract:
   "Provide summaries and examples of daily temperatures at 300+ cities.  <br><br>"
 ---
@@ -60,14 +57,6 @@ library(zip)
 # city_temperatures
 # summaries and examples of daily temps from 300+ cities
 source(here::here("code", "city_temperatures.R"))
-
-# gen_ds_tbl
-# compile a tibble that identifies data sets
-# source(here::here("code", "gen_ds_tbl.R"))
-
-# get_ref_materials
-# encapsulate reference materials as separate modules
-# source(here::here("code", "get_ref_materials.R"))
 ```
 
 ```{r}
@@ -281,7 +270,11 @@ if (construct_tibble) {
 } else {
   HNL_NYC_t_imp <- readr::read_tsv(here::here(
     "data", "retain", "HNL_NYC_t_imp.txt"
-  ))
+  )) |> 
+    dplyr::mutate(across(
+      .cols = c(Month, Day, Year), 
+      .fns  = as.integer
+    ))
 }
 ```
 
